@@ -37,8 +37,16 @@ Para estimar la primera integral mediante el método de Montecarlo, basta observ
 
 La función de densidad de una distribución uniforme en el intervalo (0,1) es:
 
-\[ ESCRIBIR // 1 si x \in (0,1) // 0 si x \notin (0,1) \]
 
+
+\[f(x)=
+\left\{ 
+\begin{array}{ccc}
+1 & \text{, si} & x \in (0,1) \\
+ 0  & \text{, si} &  x \notin (0,1)
+\end{array}
+\right.
+\]
 
 
 Por tanto, en primer lugar establecemos la forma de generar valores aleatorios, en este caso de manera uniforme en el intervalo \((0, 1)\), y definimos la función \( g \) que deberá aplicarse a esos valores aleatorios.
@@ -47,6 +55,8 @@ Por tanto, en primer lugar establecemos la forma de generar valores aleatorios, 
 genera_valor_aleatorio <- function() {
   runif(1)
 }
+
+
 
 g <- function(x) {
   (1 - x^2)^(3 / 2)
@@ -61,7 +71,11 @@ valores_g <- replicate(n, {
   x <- genera_valor_aleatorio()
   g(x)
 })
+
+# Las llaves me han permitido crear una expresión que está formada por varias expresiones
 ```
+
+
 
 Finalmente, calculamos una estimación de \( I_{1} \) a partir de la media aritmética de los valores obtenidos.
 
@@ -70,6 +84,7 @@ estimacion <- mean(valores_g)
 ```
 
 El valor estimado de \( I_{1} \) es \(`r estimacion`\).
+Este método siempre dará una aproximación, mejor o peor pero se trata de una aproximación.
 
 Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
 
