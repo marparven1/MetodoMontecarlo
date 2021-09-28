@@ -1,0 +1,146 @@
+---
+title: "Integración de Montecarlo"
+output: html_document
+---
+
+```{r replicabilidad, include=FALSE}
+set.seed(457367)
+```
+
+Dada \( h: \mathbb{R}^{d} \to \mathbb{R} \) una función integrable, nos planteamos el problema de calcular la integral definida multidimensional
+\begin{equation*}
+  I = \int_{\mathbf{R}^{d}} h(\mathbf{x}) \mathop{}\!d \mathbf{x}
+\end{equation*}
+
+En general no es posible, o es muy complicado, determinar el valor exacto de \( I \). Supongamos, no obstante, que podemos escribir la integral de la forma
+\begin{equation*}
+  I = \int_{\mathbb{R}^{d}} g(\mathbf{x}) f(\mathbf{x}) \mathop{}\!d \mathbf{x}
+\end{equation*}
+donde \( f \) es la función de densidad de un vector aleatorio \( \mathbf{X} \). Es decir, \( I = \mathbb{E}_{f}[g(\mathbf{X})] \). Podemos, entonces, aplicar el método de Montecarlo para estimar el valor de \( I \).
+
+Consideremos, por ejemplo, las siguientes dos integrales unidimensionales:
+\[
+  I_{1} = \int_{0}^{1} (1 - x^{2})^{\frac{3}{2}} \mathop{}\!d x
+  \qquad\text{e}\qquad
+  I_{2} = \int_{1}^{4} \int_{2}^{7} \frac{x^{2}y}{3} \mathop{}\!d x \mathop{}\!d y
+\]
+
+Aunque es perfectamente posible calcular el valor matemático exacto de esas dos integrales (\( I_{1} = \frac{3\pi}{16} \approx 0.58905, I_{2} = \frac{1675}{6} \approx 279.167 \)), vamos a aplicar el método de Montecarlo para estimar esos valores.
+
+
+Tengo que poner la integral como forma de esperanza, descomponiendola en f(x) y g(x), donde f(x) es fdd.
+
+
+## Estimación de \( I_{1} \)
+
+Para estimar la primera integral mediante el método de Montecarlo, basta observar que \( I_{1} = \mathbb{E}[g(X)] \), donde \( X \) es una variable uniforme en el intervalo \( (0, 1) \) y \( g(x) = (1 - x^{2})^{\frac{3}{2}} \).
+
+La función de densidad de una distribución uniforme en el intervalo (0,1) es:
+
+\[ ESCRIBIR // 1 si x \in (0,1) // 0 si x \notin (0,1) \]
+
+
+
+Por tanto, en primer lugar establecemos la forma de generar valores aleatorios, en este caso de manera uniforme en el intervalo \((0, 1)\), y definimos la función \( g \) que deberá aplicarse a esos valores aleatorios.
+
+```{r generacion-1}
+genera_valor_aleatorio <- function() {
+  runif(1)
+}
+
+g <- function(x) {
+  (1 - x^2)^(3 / 2)
+}
+```
+
+A continuación, replicamos el proceso de generar un valor aleatorio y aplicarle la función \( g \). La variable `n` determina la cantidad de replicaciones.
+
+```{r replicacion-1}
+n <- 1e5
+valores_g <- replicate(n, {
+  x <- genera_valor_aleatorio()
+  g(x)
+})
+```
+
+Finalmente, calculamos una estimación de \( I_{1} \) a partir de la media aritmética de los valores obtenidos.
+
+```{r estimacion-1}
+estimacion <- mean(valores_g)
+```
+
+El valor estimado de \( I_{1} \) es \(`r estimacion`\).
+
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
+
+```{r intervalo-de-confianza-1}
+probabilidad_cobertura <- 0.95
+alfa <- 1 - probabilidad_cobertura
+percentil <- qnorm(1 - alfa / 2)
+error_estandar <- sqrt(var(valores_g) / n)
+intervalo_confianza <- estimacion + c(-1, 1) * error_estandar * percentil
+```
+
+Un intervalo de confianza con probabilidad de cobertura \(`r probabilidad_cobertura`\) es  \((`r intervalo_confianza`)\).
+
+
+## Estimación de \( I_{2} \)
+
+Para poder estimar la integral a partir de la generación de valores uniformes en \( (0, 1) \times (0, 1) \) realizamos el siguiente cambio de variable:
+\[
+  x = 5 u_{1} + 2 \qquad\text{e}\qquad y = 3 u_{2} + 1
+\]
+
+De esta forma, la integral queda como sigue:
+\[
+  I_{2} =
+  \int_{1}^{4} \int_{2}^{7} \frac{x^{2}y}{3} \,dx \,dy =
+  \int_{0}^{1} \int_{0}^{1} \frac{(5 u_{1} + 2)^{2} (3 u_{2} + 1)}{3} 5\,du_{1}\,3\,du_{2} =
+  \int_{0}^{1} \int_{0}^{1} 5 (5 u_{1} + 2)^{2} (3 u_{2} + 1) \,du_{1} \,du_{2}
+\]
+
+Es decir, \(I_{2} = \mathbb{E}[g(\vec{U})]\), donde \(\vec{U} = \big(U_{1}, U_{2}\big)\) es un vector aleatorio uniforme en \((0, 1) \times (0, 1)\) (equivalentemente, \(U_{1}\) y \(U_{2}\) son variables independientes uniformes en el intervalo \((0, 1)\)) y \(g(u_{1}, u_{2}) = 5 (5 u_{1} + 2)^{2} (3 u_{2} + 1)\).
+
+Por tanto, para aplicar el método de Montecarlo, en primer lugar establecemos la forma de generar vectores aleatorios, en este caso de manera uniforme en el intervalo \((0, 1) \times (0, 1)\), y definimos la función \( g \) que deberá aplicarse a esos vectores aleatorios.
+
+```{r generacion-2}
+genera_vector_aleatorio <- function() {
+  runif(2)
+}
+
+g <- function(u) {
+  u_1 <- u[1]
+  u_2 <- u[2]
+  5 * (5 * u_1 + 2)^2 * (3 * u_2 + 1)
+}
+```
+
+A continuación, replicamos el proceso de generar un vector aleatorio y aplicarle la función \(g\). La variable `n` determina la cantidad de replicaciones.
+
+```{r replicacion-2}
+n <- 1e5
+valores_g <- replicate(n, {
+  u <- genera_vector_aleatorio()
+  g(u)
+})
+```
+
+Finalmente, calculamos una estimación de \(I_{2}\) a partir de la media aritmética de los valores obtenidos.
+
+```{r estimacion-2}
+estimacion <- mean(valores_g)
+```
+
+El valor estimado de \(I_{2}\) es \(`r estimacion`\).
+
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
+
+```{r intervalo-de-confianza-2}
+probabilidad_cobertura <- 0.95
+alfa <- 1 - probabilidad_cobertura
+percentil <- qnorm(1 - alfa / 2)
+error_estandar <- sqrt(var(valores_g) / n)
+intervalo_confianza <- estimacion + c(-1, 1) * error_estandar * percentil
+```
+
+Un intervalo de confianza con probabilidad de cobertura \(`r probabilidad_cobertura`\) es \((`r intervalo_confianza`)\).
