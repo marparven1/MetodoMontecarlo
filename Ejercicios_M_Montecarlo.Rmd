@@ -1,0 +1,243 @@
+---
+title: "Ejercicios Método de Montecarlo"
+subtitle: "Técnicas de Computación para la Estadística"
+author: "Marta Venegas Pardo"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(457367)
+```
+
+Para crear éste documento RMarkdown reproducible, hemos hecho uso de una semilla.
+
+
+Para cada uno de los problemas que se proponen, calcular la estimación requerida mediante el método de Montecarlo. Construir el mejor (de menor longitud) intervalo de confianza con probabilidad de cobertura 99.7% que se pueda. 
+
+Para tratar de mejorar los intervalos construidos pueden aplicarse las siguientes técnicas:
+
+- Generar una mayor cantidad de valores aleatorios (considerar un $n$ mayor).
+
+- Aplicar técnicas de reducción de varianza: variables antitéticas, muestreo estratificado, muestreo por importancia.
+
+Documentar en RMarkdown (de manera reproducible y con parámetros, en su caso) todo el proceso de construcción y mejora del intervalo de confianza.
+
+Puede ser de utilidad considerar esta página de Wikipedia, en la que puede encontrarse un listado de distintas distribuciones de probabilidad, y este paquete de R, que permite manejar distribuciones de probabilidad adicionales a las estándar.
+
+Los problemas propuestos son los siguientes:
+
+
+# Ejercicio 1
+
+Estimarr el valor de: 
+\[I =
+  \int_{0}^{1} x^2 \sqrt{1-x^2}  \,dx = \dfrac{\pi}{16} \simeq 0,1963495408493621
+\]
+
+Para estimar esta integral mediante el Método de Montecarlo, hay que poner la integral como una esperanza de x.
+
+Es decir: \(I=E[g(X)] \), donde X es una variable uniforme en el intervalo (0,1) y g(x) = \(x^2 \sqrt{1-x^2}\).
+
+## Pasos
+
+### Definición de funciones
+
+En este caso de manera uniforme en el intervalo (0,1), y definimos la función g que deberá aplicarse a esos valores aleatorios.
+
+```{r}
+genera_valor_aleatorio <- function() {
+  runif(1)
+}
+
+
+
+g <- function(x) {
+  sqrt((1 - x^2))*x^2
+}
+```
+
+### Generamos valores aleatorios 
+
+Generamos valores aleatorios y le aplicamos la función g.
+
+```{r}
+n <- 1e6
+valores_g <- replicate(n , {
+  x <- genera_valor_aleatorio()
+  g(x)
+}
+)
+```
+
+```{r}
+sample(valores_g,size = 15)
+```
+
+### Estimación de I
+
+```{r}
+estimacion <- mean(valores_g)
+```
+
+
+
+El valor estimado de \( I \) es \(`r estimacion`\).
+Este método siempre dará una aproximación, mejor o peor pero se trata de una aproximación.
+
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
+
+### Intervalo de confianza
+
+
+```{r}
+probabilidad_cobertura <- 0.997
+alfa <- 1 - probabilidad_cobertura
+percentil<- qnorm(1 - alfa / 2)
+error_estandar <- sqrt(var(valores_g)/n)
+intervalo_confianza <- estimacion + c(-1,1) * error_estandar * percentil
+```
+
+
+Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es  ( \(`r intervalo_confianza`\) )
+
+
+# Ejercicio 2
+
+
+Estimarr el valor de: 
+\[I =
+  \int_{0}^{1} -30 \cos(\pi x) x^4 (1-x^4)  \,dx  \simeq 1,714716594386961
+\]
+
+
+## Definición de la función g
+
+```{r}
+pi<- pi
+g<- function(x){
+  -30 * cos(pi * x) * x^4 * (1-x^4)
+}
+```
+
+
+## Generación de valores aleatorios
+
+
+```{r}
+n <- 1e6
+valores_g <- replicate(n , {
+  x <- genera_valor_aleatorio()
+  g(x)
+}
+)
+```
+
+
+
+
+## Estimación de I
+
+```{r}
+estimacion <- mean(valores_g)
+```
+
+
+
+El valor estimado de \( I \) es \(`r estimacion`\).
+Este método siempre dará una aproximación, mejor o peor pero se trata de una aproximación.
+
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
+
+
+## Intervalo de confianza
+
+
+```{r}
+probabilidad_cobertura <- 0.997
+alfa <- 1 - probabilidad_cobertura
+percentil<- qnorm(1 - alfa / 2)
+error_estandar <- sqrt(var(valores_g)/n)
+intervalo_confianza <- estimacion + c(-1,1) * error_estandar * percentil
+```
+
+
+Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es  ( \(`r intervalo_confianza`\) )
+
+
+
+
+
+# Ejercicio 3
+
+
+
+Estimarr el valor de: 
+\[I =
+  \int_{0}^{1} 
+  \dfrac{e^{- \frac{x^2}{2}}}{\sqrt{x(1-x)}}
+  \,dx  \simeq 2,646630906854468
+\]
+
+
+## Definición de la función g
+
+```{r}
+pi<- pi
+g<- function(x){
+  ( exp(-(x^2)/(2)))/(sqrt(x*(1-x)))
+}
+```
+
+
+## Generación de valores aleatorios
+
+
+```{r}
+n <- 1e6
+valores_g <- replicate(n , {
+  x <- genera_valor_aleatorio()
+  g(x)
+}
+)
+```
+
+
+
+
+## Estimación de I
+
+```{r}
+estimacion <- mean(valores_g)
+```
+
+
+
+El valor estimado de \( I \) es \(`r estimacion`\).
+Este método siempre dará una aproximación, mejor o peor pero se trata de una aproximación.
+
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
+
+
+## Intervalo de confianza
+
+
+```{r}
+probabilidad_cobertura <- 0.997
+alfa <- 1 - probabilidad_cobertura
+percentil<- qnorm(1 - alfa / 2)
+error_estandar <- sqrt(var(valores_g)/n)
+intervalo_confianza <- estimacion + c(-1,1) * error_estandar * percentil
+```
+
+
+Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es  ( \(`r intervalo_confianza`\) )
+
+
+
+
