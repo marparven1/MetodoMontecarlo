@@ -141,12 +141,14 @@ a.sourceLine {
 <div class="post-listing">
 <div id="TOC" class="toc">
 <ul>
-<li><a href="#estimación-de-i_1"><span class="toc-section-number">0.1</span> Estimación de <span class="math inline">\(I_{1}\)</span></a></li>
-<li><a href="#estimación-de-i_2-.-integral-bidimensional"><span class="toc-section-number">0.2</span> Estimación de <span class="math inline">\(I_{2}\)</span> . Integral bidimensional</a></li>
-<li><a href="#distribuciones"><span class="toc-section-number">0.3</span> Distribuciones</a></li>
-<li><a href="#densidades"><span class="toc-section-number">0.4</span> Densidades</a></li>
-<li><a href="#independencia"><span class="toc-section-number">0.5</span> Independencia</a></li>
-<li><a href="#cambios-de-variables-para-transformar-01-en-distintos-invervalos"><span class="toc-section-number">1</span> Cambios de variables para transformar (0,1) en distintos invervalos</a></li>
+<li><a href="#estimación-de-i_1"><span class="toc-section-number">1</span> Estimación de <span class="math inline">\(I_{1}\)</span></a></li>
+<li><a href="#estimación-de-i_2-.-integral-bidimensional"><span class="toc-section-number">2</span> Estimación de <span class="math inline">\(I_{2}\)</span> . Integral bidimensional</a>
+<ul>
+<li><a href="#distribuciones"><span class="toc-section-number">2.1</span> Distribuciones</a></li>
+<li><a href="#densidades"><span class="toc-section-number">2.2</span> Densidades</a></li>
+<li><a href="#independencia"><span class="toc-section-number">2.3</span> Independencia</a></li>
+</ul></li>
+<li><a href="#cambios-de-variables-para-transformar-01-en-distintos-invervalos"><span class="toc-section-number">3</span> Cambios de variables para transformar (0,1) en distintos invervalos</a></li>
 </ul>
 </div>
 
@@ -165,8 +167,8 @@ a.sourceLine {
 \]</span></p>
 <p>Aunque es perfectamente posible calcular el valor matemático exacto de esas dos integrales (<span class="math inline">\(I_{1} = \frac{3\pi}{16} \approx 0.58905, I_{2} = \frac{1675}{6} \approx 279.167\)</span>), vamos a aplicar el método de Montecarlo para estimar esos valores.</p>
 <p>Tengo que poner la integral como forma de esperanza, descomponiendola en f(x) y g(x), donde f(x) es fdd.</p>
-<div id="estimación-de-i_1" class="section level2" number="0.1">
-<h2 number="0.1"><span class="header-section-number">0.1</span> Estimación de <span class="math inline">\(I_{1}\)</span></h2>
+<div id="estimación-de-i_1" class="section level1" number="1">
+<h1 number="1"><span class="header-section-number">1</span> Estimación de <span class="math inline">\(I_{1}\)</span></h1>
 <p>Para estimar la primera integral mediante el método de Montecarlo, basta observar que <span class="math inline">\(I_{1} = \mathbb{E}[g(X)]\)</span>, donde <span class="math inline">\(X\)</span> es una variable uniforme en el intervalo <span class="math inline">\((0, 1)\)</span> y <span class="math inline">\(g(x) = (1 - x^{2})^{\frac{3}{2}}\)</span>.</p>
 <p>La función de densidad de una distribución uniforme en el intervalo (0,1) es:</p>
 <p><span class="math display">\[f(x)=
@@ -206,12 +208,22 @@ a.sourceLine {
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>intervalo_confianza <span class="ot">&lt;-</span> estimacion <span class="sc">+</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>) <span class="sc">*</span> error_estandar <span class="sc">*</span> percentil</span></code></pre></div>
 <p>Un intervalo de confianza con probabilidad de cobertura <span class="math inline">\(0.95\)</span> es <span class="math inline">\((0.5855919, 0.5897055)\)</span>.</p>
 </div>
-<div id="estimación-de-i_2-.-integral-bidimensional" class="section level2" number="0.2">
-<h2 number="0.2"><span class="header-section-number">0.2</span> Estimación de <span class="math inline">\(I_{2}\)</span> . Integral bidimensional</h2>
+<div id="estimación-de-i_2-.-integral-bidimensional" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Estimación de <span class="math inline">\(I_{2}\)</span> . Integral bidimensional</h1>
 <p>Para poder estimar la integral a partir de la generación de valores uniformes en <span class="math inline">\((0, 1) \times (0, 1)\)</span> realizamos el siguiente cambio de variable: <span class="math display">\[
   x = 5 u_{1} + 2 \qquad\text{e}\qquad y = 3 u_{2} + 1
 \]</span></p>
-<p>Son estos cambios porque la idea es que <span class="math inline">\(u_1 \qquad\text{y}\qquad u_2\)</span> se muevan entre <span class="math inline">\(\{0,1 \}\)</span>. Al hacer valor numérico obtenemos los límites de las integrales.</p>
+<p>Son estos cambios porque la idea es que <span class="math inline">\(u_1 \qquad\text{y}\qquad u_2\)</span> se muevan entre <span class="math inline">\(\{0,1 \}\)</span>.</p>
+<p>Al hacer valor numérico obtenemos los límites de las integrales de la siguiente forma: <span class="math display">\[
+\left\{ 
+\begin{array}{l}
+  x=7 \implies 7 = 5 u_1 + 2 \  \Leftrightarrow  u_1 = 1 \\
+  x=2 \implies 2 = 5 u_1 + 2 \  \Leftrightarrow  u_1 = 0  \\
+  y=4 \implies 4 = 3 u_2 + 1 \  \Leftrightarrow  u_2 = 1   \\ 
+  y=1 \implies 1 = 3 u_2 + 1 \  \Leftrightarrow  u_2 = 0    \\
+\end{array}
+\right.
+\]</span></p>
 <p>De esta forma, la integral queda como sigue: <span class="math display">\[
   I_{2} =
   \int_{1}^{4} \int_{2}^{7} \frac{x^{2}y}{3} \,dx \,dy =
@@ -220,18 +232,18 @@ a.sourceLine {
 \]</span></p>
 <p>Es decir, <span class="math inline">\(I_{2} = \mathbb{E}[g(\vec{U})]\)</span>, donde <span class="math inline">\(\vec{U} = \big(U_{1}, U_{2}\big)\)</span> es un vector aleatorio uniforme en <span class="math inline">\((0, 1) \times (0, 1)\)</span> (equivalentemente, <span class="math inline">\(U_{1}\)</span> y <span class="math inline">\(U_{2}\)</span> son variables independientes uniformes en el intervalo <span class="math inline">\((0, 1)\)</span>) y <span class="math inline">\(g(u_{1}, u_{2}) = 5 (5 u_{1} + 2)^{2} (3 u_{2} + 1)\)</span>.</p>
 <p>Por tanto, para aplicar el método de Montecarlo, en primer lugar establecemos la forma de generar vectores aleatorios, en este caso de manera uniforme en el intervalo <span class="math inline">\((0, 1) \times (0, 1)\)</span>, y definimos la función <span class="math inline">\(g\)</span> que deberá aplicarse a esos vectores aleatorios.</p>
+<div id="distribuciones" class="section level2" number="2.1">
+<h2 number="2.1"><span class="header-section-number">2.1</span> Distribuciones</h2>
+<p><span class="math inline">\(\vec{U} \sim U((0, 1) \times (0, 1))\)</span></p>
+<p><span class="math inline">\(U_i \sim U(0,1) \quad i=1,2\)</span></p>
 </div>
-<div id="distribuciones" class="section level2" number="0.3">
-<h2 number="0.3"><span class="header-section-number">0.3</span> Distribuciones</h2>
-<p><span class="math inline">\(\vec{U} \sim U((0, 1) \times (0, 1))\)</span> <span class="math inline">\(U_i \sim U(0,1) \quad i=1,2\)</span></p>
-</div>
-<div id="densidades" class="section level2" number="0.4">
-<h2 number="0.4"><span class="header-section-number">0.4</span> Densidades</h2>
+<div id="densidades" class="section level2" number="2.2">
+<h2 number="2.2"><span class="header-section-number">2.2</span> Densidades</h2>
 <p>La función de densidad de <span class="math inline">\(\vec{U}, \quad f_{\vec{U}}(u_1,u_2)= \left\{ \begin{array}{ccc} 1 &amp; \text{, si} &amp; (u_1,u_2) \in (0, 1) \times (0, 1) \\  0 &amp; \text{, si} &amp; (u_1,u_2) \notin (0,1) \times (0,1) \end{array} \right.\)</span></p>
 <p>La densidad de cada variable independiente es una uniforme en el intervalo <span class="math inline">\((0,1)\)</span>.</p>
 </div>
-<div id="independencia" class="section level2" number="0.5">
-<h2 number="0.5"><span class="header-section-number">0.5</span> Independencia</h2>
+<div id="independencia" class="section level2" number="2.3">
+<h2 number="2.3"><span class="header-section-number">2.3</span> Independencia</h2>
 <p>Pero se tiene que <span class="math inline">\(f_{\vec{U}} = f_{u_1}(u_1) \times f_{u_2}(u_2)\)</span>, es decir, las variables son independientes por lo que calculo las integrales de manera separada.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>genera_vector_aleatorio <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">runif</span>(<span class="dv">2</span>)</span>
@@ -265,8 +277,9 @@ a.sourceLine {
 </ul>
 <p>Montecarlo: Pongo la integral como la esperanza de un g(x).</p>
 </div>
-<div id="cambios-de-variables-para-transformar-01-en-distintos-invervalos" class="section level1" number="1">
-<h1 number="1"><span class="header-section-number">1</span> Cambios de variables para transformar (0,1) en distintos invervalos</h1>
+</div>
+<div id="cambios-de-variables-para-transformar-01-en-distintos-invervalos" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> Cambios de variables para transformar (0,1) en distintos invervalos</h1>
 <p><span class="math inline">\(\left. \begin{array}{ll} U \longrightarrow &amp; x \\ (0,1) \longrightarrow (a,b) &amp; x = U(b-a)+a \\ (0,1) \longrightarrow (0,+ \infty) &amp; x= \dfrac{1}{1-U} - 1 \\ (0,1) \longrightarrow (a,+ \infty) \quad a&gt;0 &amp; x = \dfrac{2a}{1-U} - a \\ (0,1) \longrightarrow (- \infty,0) &amp; x = 1- \dfrac{1}{U} \\ (0,1) \longrightarrow (- \infty,a) \quad a&gt; &amp; x = a- \dfrac{2a}{U} \end{array} \right.\)</span></p>
 </div>
 </article>

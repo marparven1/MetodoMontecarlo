@@ -86,6 +86,13 @@
       "Repository": "CRAN",
       "Hash": "41287f1ac7d28a92f0a286ed507928d3"
     },
+    "prettydoc": {
+      "Package": "prettydoc",
+      "Version": "0.4.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "c20a905f41b50770438ac4727649546f"
+    },
     "renv": {
       "Package": "renv",
       "Version": "0.14.0",
