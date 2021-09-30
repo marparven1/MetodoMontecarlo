@@ -1,15 +1,13 @@
 ---
 title: "Integración de Montecarlo"
+subtitle: "Técnicas de Computación para la Estadística"
 output: 
-  html_document: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
     toc: true
     toc_depth: 2
     number_section: yes
-    toc_float:
-     collapsed: false
-     smooth_scroll: false
-    theme: united
-    highlight: tango
 ---
 
 ```{r replicabilidad, include=FALSE}
