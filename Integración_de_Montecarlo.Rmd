@@ -1,11 +1,21 @@
 ---
 title: "Integración de Montecarlo"
-output: html_document
+output: 
+  html_document: 
+    toc: true
+    toc_depth: 2
+    number_section: yes
+    toc_float:
+     collapsed: false
+     smooth_scroll: false
+    theme: united
+    highlight: tango
 ---
 
 ```{r replicabilidad, include=FALSE}
 set.seed(457367)
 ```
+
 
 Dada \( h: \mathbb{R}^{d} \to \mathbb{R} \) una función integrable, nos planteamos el problema de calcular la integral definida multidimensional
 \begin{equation*}
@@ -99,12 +109,14 @@ intervalo_confianza <- estimacion + c(-1, 1) * error_estandar * percentil
 Un intervalo de confianza con probabilidad de cobertura \(`r probabilidad_cobertura`\) es  \((`r intervalo_confianza`)\).
 
 
-## Estimación de \( I_{2} \)
+## Estimación de \( I_{2} \) . Integral bidimensional
 
 Para poder estimar la integral a partir de la generación de valores uniformes en \( (0, 1) \times (0, 1) \) realizamos el siguiente cambio de variable:
 \[
   x = 5 u_{1} + 2 \qquad\text{e}\qquad y = 3 u_{2} + 1
 \]
+
+Son estos cambios porque la idea es que \(u_1 \qquad\text{y}\qquad u_2\) se muevan entre \(\{0,1 \}\). Al hacer valor numérico obtenemos los límites de las integrales.
 
 De esta forma, la integral queda como sigue:
 \[
@@ -118,13 +130,36 @@ Es decir, \(I_{2} = \mathbb{E}[g(\vec{U})]\), donde \(\vec{U} = \big(U_{1}, U_{2
 
 Por tanto, para aplicar el método de Montecarlo, en primer lugar establecemos la forma de generar vectores aleatorios, en este caso de manera uniforme en el intervalo \((0, 1) \times (0, 1)\), y definimos la función \( g \) que deberá aplicarse a esos vectores aleatorios.
 
+## Distribuciones
+
+\(\vec{U} \sim U((0, 1) \times (0, 1))\) 
+\(U_i \sim U(0,1) \quad i=1,2\)
+
+## Densidades
+
+La función de densidad de \( \vec{U},  \quad f_{\vec{U}}(u_1,u_2)=  
+\left\{ 
+\begin{array}{ccc}
+1 & \text{, si} & (u_1,u_2) \in (0, 1) \times (0, 1) \\
+ 0  & \text{, si} &  (u_1,u_2) \notin (0,1) \times (0,1)
+\end{array}
+\right. \) 
+
+La densidad de cada variable independiente es una uniforme en el intervalo \((0,1)\).
+
+
+## Independencia
+
+Pero se tiene que \( f_{\vec{U}} = f_{u_1}(u_1) \times f_{u_2}(u_2)\), es decir, las variables son independientes por lo que calculo las integrales de manera separada.
+
+
 ```{r generacion-2}
 genera_vector_aleatorio <- function() {
   runif(2)
 }
 
 g <- function(u) {
-  u_1 <- u[1]
+  u_1 <-u[1]
   u_2 <- u[2]
   5 * (5 * u_1 + 2)^2 * (3 * u_2 + 1)
 }
@@ -159,3 +194,30 @@ intervalo_confianza <- estimacion + c(-1, 1) * error_estandar * percentil
 ```
 
 Un intervalo de confianza con probabilidad de cobertura \(`r probabilidad_cobertura`\) es \((`r intervalo_confianza`)\).
+
+
+Notas: 
+
+- renv::restore() : Restaura paquetes no instalados 
+- renv::snapshot() : Actualiza los paquetes
+
+Montecarlo: Pongo la integral como la esperanza de un g(x).
+
+# Cambios de variables para transformar (0,1) en distintos invervalos
+
+
+
+
+\(\left. 
+\begin{array}{ll}
+U  \longrightarrow & x \\
+(0,1) \longrightarrow (a,b)                       & x = U(b-a)+a        \\
+(0,1) \longrightarrow (0,+ \infty)                & x= \dfrac{1}{1-U} - 1 \\ 
+(0,1) \longrightarrow (a,+ \infty) \quad a>0      & x =     \dfrac{2a}{1-U} - a   \\
+(0,1)  \longrightarrow (- \infty,0)               & x = 1- \dfrac{1}{U}            \\
+(0,1) \longrightarrow (- \infty,a) \quad a>       & x = a- \dfrac{2a}{U}   
+\end{array}
+\right.
+\)
+
+
