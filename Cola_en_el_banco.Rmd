@@ -1,0 +1,318 @@
+---
+title: "Cola en el banco"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+    toc: true
+    toc_depth: 4
+params:
+  T_apertura: 300
+  tasa_llegada: 1
+  media_servicio: !r 45 / 60 # !r : para poner expresiones de R
+---
+
+```{r replicabilidad, include=FALSE}
+set.seed(708446)
+```
+
+
+### Procesos estocásticos
+
+
+Colección finita de VA que la podemos hacer infinita.
+
+Un _proceso estocástico_ es una colección \( \mathbf{X} = \{X(t) \mid t \in \mathcal{T}\} \) de variables aleatorias. A menudo \( \mathcal{T} = \mathbb{Z} \) (en cuyo caso es habitual usar la notación \( X_{t} \), en lugar de \( X(t) \)) o \( \mathcal{T} = [0, +\infty) \), representando la evolución de una variable aleatoria en tiempo discreto o continuo, respectivamente.
+
+Cualquier realización de \( \mathbf{X} \) proporciona una función de \( \mathcal{T} \) en \( \mathbb{R} \), que llamamos _camino muestral_. En definitiva, que cada variable del vector  \( \mathbf{X}\) toma un valor.
+
+
+En una simulación solo se generará una cantidad finita de valores del proceso, obteniéndose un vector aleatorio \( \bigl(X(t_1), \dotsc, X(t_m) \bigr) \), donde \( m \) es un valor de una variable aleatoria \( M(\mathbf{X}) \), llamada _tiempo de parada_, tal que \( \mathbb{P}(M(\mathbf{X}) < +\infty) = 1 \).
+
+Un _proceso puntual_ describe un conjunto aleatorio de puntos \( X_{i} \) en un conjunto \( \mathcal{S} \subseteq \mathbb{R}^{d} \). Estos procesos pueden usarse para modelizar el tiempo de llegada de llamadas de teléfono, la posición de árboles en un bosque, etc.
+Por ejemplo, si en mi centro de operaciones tengo a alguien cogiendo llamadas de teléfono, esto es un proceso infinito numerable, las llamadas nunca acaban pero siempre hay alguien que las coge.
+
+
+\( N(\mathcal{S}) \) denota el número de puntos del proceso, que puede ser fijo o aleatorio, finito o infinito numerable. Para cada \( A \subseteq \mathcal{S} \), el número de puntos contenido en \( A \) es
+\begin{equation*}
+  N(A) = \sum_{i = 1}^{N(\mathcal{S})} 𝟙_{A}(X_{i})
+\end{equation*}
+Consideraremos procesos _no explosivos_, es decir, tales que \( \mathbb{P}\bigl(N(A) < +\infty\bigr) = 1 \), para cada \( A \) con volumen finito. 
+Dentro de un espacio acotado, nunca puede haber una cantidaad infinita de puntos.
+
+Un proceso puntual es un _proceso de Poisson homogéneo_ sobre \( \mathcal{S} \) con intensidad \( \lambda > 0 \) si
+
+1. \( N(A) \sim \mathrm{Pois}\bigl(\lambda \mathrm{vol}(A)\bigr) \), para cualquier \( A \subseteq \mathcal{S} \) con volumen finito.
+2. \( N(A_{1}), \dotsc, N(A_{k}) \) son independientes, para cualesquiera \( A_{1}, \dotsc, A_{k} \subseteq \mathcal{S} \) conjuntos disjuntos con volumen finito.
+
+Si \( \mathcal{S} \) es tal que \( \mathrm{vol}(\mathcal{S}) < +\infty \) y podemos generar muestras uniformes de \( \mathcal{S} \), entonces podemos generar caminos muestrales de un proceso de Poisson homogéneo sobre \( \mathcal{S} \) como sigue:
+
+1. Generar \( N(\mathcal{S}) \sim \mathrm{Pois}\bigl(\lambda \mathrm{vol}(\mathcal{S})\bigr) \).
+2. Generar \( X_{i} \sim \mathrm{Unif}(\mathcal{S}) \) de manera independiente para cada \( i = 1, \dotsc, N(\mathcal{S}) \).
+
+Cuando \( \mathcal{S} = [0, +\infty) \) es habitual suponer que los puntos se generan en orden, \( X_{1} < X_{2} < \dotsb \). Si caracterizamos el proceso como un proceso de conteo dado por la función
+\begin{equation*}
+  N(t) = N([0, t]) = \sum_{i = 1}^{+\infty} 𝟙_{[0, t]}(X_{i})
+\end{equation*}
+entonces un proceso de Poisson homogéneo viene determinado por las siguientes propiedades:
+
+* \( N(0) = 0 \).
+* \( N(t) - N(s) \sim \mathrm{Pois}\bigl(\lambda (t - s)\bigr) \), para \( 0 \leq s < t \).
+* \( N(t_{i}) - N(t_{i - 1}) \) son independientes, para \( 0 = t_{0} < t_{1} < \dotsb < t_{m} \).
+
+La siguiente propiedad caracteriza a estos procesos de Poisson homogéneos:
+\begin{equation*}
+  X_{i} - X_{i - 1} \sim \mathrm{Exp}(\lambda), i \geq 1
+  \quad
+  \text{de manera independiente}
+\end{equation*}
+donde consideramos \( X_{0} = 0 \). Esta propiedad sugiere generar un camino muestral del proceso de la siguiente manera:
+
+1. Generar \( E_{i} \sim \mathrm{Exp}(\lambda), i \geq 1 \) de manera independiente.
+2. Hacer \( X_{i} = X_{i - 1} + E_{i}, i \geq 1 \).
+3. Terminar cuando se tenga la cantidad deseada de puntos o cuando el proceso salga de una ventana de tiempo \( [0, T] \) previamente especificada.
+
+Cuando la condición de parada es la segunda, también se puede hacer uso del método general descrito arriba:
+
+1. Generar \( N \sim \mathrm{Pois}(\lambda T) \).
+2. Generar \( S_{i} \sim \mathrm{Unif}([0, T]) \) de manera independiente para cada \( i = 1, \dotsc, N \).
+3. Ordenar de menor a mayor \( S_{1}, \dotsc, S_{N} \) para obtener \( S_{(i)}, \dotsc, S_{(N)} \).
+4. Hacer \( X_{i} = S_{(i)} \), para cada \( i = 1, \dotsc, N \).
+
+
+### Ejemplo: cola en el banco
+
+Consideremos una sucursal de un banco que cada día permanece abierta durante \( `r params$T_apertura` \) minutos. Supongamos que la sucursal solo tiene un oficinista, que los clientes llegan a la sucursal de acuerdo a un proceso de Poisson con una intensidad de \( `r params$tasa_llegada` \) por minuto y que cada cliente es atendido durante un tiempo aleatorio que tiene una distribución exponencial de media \( `r params$media_servicio` \) minutos. Nos planteamos el problema de _estimar el promedio diario de clientes que esperarán más de cinco minutos a ser atendidos_.
+
+_Nota_: Lo simularé muchas veces y haré la media de clientes que esperan cinco minutos.
+
+Denotemos
+
+* \( W_{i} \) = tiempo de espera del cliente \( i \)-ésimo.
+* \( T_{i} \) = tiempo transcurrido entre la llegada del cliente \( (i - 1) \)-ésimo y la del cliente \( i \)-ésimo.
+* \( V_{i} \) = tiempo de servicio durante el cual fue atendido el cliente \( i \)-ésimo.
+
+El flujo de clientes atendidos en el banco se puede modelizar mediante el siguiente proceso estocástico:
+\begin{equation*}
+  \mathbf{X} = (T_{1}, V_{1}, T_{2}, V_{2}, \dotsc)
+\end{equation*}
+donde \( T_{i} \overset{\tiny\text{i. i. d.}}{\sim} \mathrm{Exp}(\lambda) \), con \( \lambda = `r params$tasa_llegada` \), y \( V_i \overset{\tiny\text{i. i. d.}}{\sim} \mathrm{Exp}(\frac{1}{\mu}) \), con \( \mu = `r params$media_servicio` \).
+
+
+- _Criterio de parada_:
+Yo querré parar cuando hayan llegado todos los clientes, pero no podré asegurar cuando va a llegar el último cliente con el banco abierto, esto es impredecible, ya que la llegada de los clientes es aleatoria. Por ello, mi criterio de parada será el siguiente: Paro cuando llegue el primer cliente con el banco cerrado, será el primer cliente que llega tarde. Este valor generado no me interesa, es un cliente que llega tarde, pero esa información es necesaria, para no generar un bucle infinito.
+
+
+Para poder simular \( \mathbf{X} \) definimos el tiempo de parada \( M(\textbf{X}) \) como
+\begin{equation*}
+  M(t_1, v_1, t_2, v_2, \dotsc) =
+  \min(m \geq 1 \mid \sum_{i = 1}^{m} t_i >= `r params$T_apertura`)
+\end{equation*}
+de tal forma que se tiene, efectivamente, que \( \mathbb{P}(M(\mathbf{X}) < +\infty) = 1 \).
+
+
+
+
+
+El valor a estimar es entonces \( \mathbb{E}[g(\mathbf{X})] \), donde la función \( g \) se define a partir del tiempo de parada:
+\begin{equation*}
+  g(t_1, v_1, t_2, v_2, \dotsc) = \sum_{i = 1}^{M(t_1, v_1, t_2, v_2, \dotsc) - 1} 𝟙(w_i > 5)
+\end{equation*}
+
+Le resto 1 porque es el inmediatamente anterior al que ha llegado tarde, ese no me interesa y lo elimino.
+
+
+
+Los tiempos de espera \( w_i \) de cada cliente se pueden calcular mediante la _recursión de Lindley_:
+\begin{align*}
+  w_{0} &= 0 \\
+  v_{0} &= 0 \\
+  w_{i} &= [w_{i - 1} + v_{i - 1} - t_{i}]^{+}, \quad \text{para \( i \geq 1 \)}
+\end{align*}
+donde se define \( [x]^{+} = \max(0, x) \).
+
+Estamos ya en condiciones de establecer la forma de generar un camino muestral del proceso estocástico y de calcular el número de clientes que han esperado más de cinco minutos a ser atendidos.
+
+
+Mismo esquema: 
+
+- Generación de valores de X
+- Replicación
+- Estimación
+
+
+#### Solución básica
+
+```{r generacionI}
+genera_llegada_y_atencion_de_clientes <-
+  function(T_apertura, tasa_llegada, media_servicio) {
+    tiempos_llegadas_y_servicios <- numeric()
+    tiempo_total <- 0
+    repeat {
+       tiempo_entre_llegadas <- rexp(1, rate = tasa_llegada)
+       tiempo_servicio <- rexp(1 , rate = 1 / media_servicio) # el 1 es la tasa de llegada
+       tiempos_llegadas_y_servicios <- c(tiempos_llegadas_y_servicios, # revisar q sea eso lo q va ahí
+                                         tiempo_entre_llegadas,
+                                         tiempo_servicio)
+       
+       tiempo_total <- tiempo_total + tiempo_entre_llegadas # sumatorio sum ti > 300
+      if (tiempo_total >= T_apertura) {
+        break
+      }
+    }
+    tiempos_llegadas_y_servicios# lo que devuelve la función 
+  }
+
+# Tambien está la información del cliente que llega con el banco cerrado
+
+cuenta_cuantos_clientes_esperan_mucho <- function(tiempos){
+  if(length(tiempos) <= 4 ) { # el 4 contempla todas las posibilidades 
+    #El primer cliente puede llegar tarde, la probabilidad es ínfima, pero no 0
+    0 # Enconces ninguno espera mas de 5 minutos, porq el 1 ya llego tarde, fin del problema
+  }  else{
+    tiempos <- tiempos[1:(length(tiempos)-2)] # el último no lo quiero (le quito su T y su V por eso -2) L38
+    numero_clientes_esperan_mucho <- 0 # cada tiempo de espera w_1 depende del tiempo de espera anterior, por lo que no puedo evitar el bucle
+    tiempo_de_espera <- 0 # valor inicial (me lo da el problema: wo)
+                          # el primer cliente que llega al banco no espera nada w1 = 0, considero que eso es del 1º cliente
+    for(i in seq(3,length(tiempos),by=2)) {    # considero los pares Ti,Vi // i = indice en el vector  X (lo voy cambiando de                                                     2en2) Empiezo en el cliente 2, posición 3 X= (T1,V1,T2,V2,...)
+    tiempo_de_espera <- max(tiempo_de_espera + 
+                              tiempos[i-1] - # si tengo T2,V2, el T1 es el inmediatamente anterior, por eso -1 L43
+                              tiempos[i],
+                            0
+                            )
+    if(tiempo_de_espera > 5){
+      numero_clientes_esperan_mucho <- numero_clientes_esperan_mucho + 1 
+    }
+    }
+    numero_clientes_esperan_mucho # tiene que estar dentro del else
+ }
+}
+
+```
+
+
+```{r replicacionI}
+n <- 5e3
+
+system.time(
+
+valores_clientes_esperan_mucho <- replicate(n, {
+  tiempos_llegadas_y_servicios <-  
+    do.call(genera_llegada_y_atencion_de_clientes,params)
+  
+ cuenta_cuantos_clientes_esperan_mucho(tiempos_llegadas_y_servicios)
+})
+
+# genera_llegada_y_atencion_de_clientes( T_apertura     =   params$T_apertura, 
+                                         #tasa_llegada   =   params$tasa_llegada,                                                                                   #media_servicio =   params$media_servicio)
+## Esto es lo mismo que: do.call(genera_llegada_y_atencion_de_clientes,params)
+# do.call(función,listaa)
+)
+```
+
+
+```{r estimacionI}
+estimacion_clientes_esperan_mucho <- mean(valores_clientes_esperan_mucho)
+
+probabilidad_cobertura <- 0.95
+alfa <- 1 - probabilidad_cobertura
+percentil <- qnorm(1 - alfa / 2)
+error_clientes_esperan_mucho <-
+  sqrt(var(valores_clientes_esperan_mucho) / n)
+
+intervalo_clientes_esperan_mucho <-
+  estimacion_clientes_esperan_mucho +
+  c(-1, 1) * error_clientes_esperan_mucho * percentil
+```
+
+En una sucursal bancaria con un solo oficinista, que permanece abierta durante \( `r params$T_apertura` \) minutos, con una tasa de llegada de clientes de \( `r params$tasa_llegada` \) por minuto y con un tiempo medio de servicio de \( `r params$media_servicio` \) minutos, el valor estimado de clientes que esperarán más de cinco minutos a ser atendidos es de \( `r round(estimacion_clientes_esperan_mucho)` \), siendo \( (`r round(intervalo_clientes_esperan_mucho)`) \) un intervalo de confianza con probabilidad de cobertura \( `r probabilidad_cobertura` \).
+
+
+Aqui iría otra forma:
+El tiempo total y comprobar si es mayor o igual   que el tiempo de apertura, lo hago lo primero. L38 innecesaria
+
+
+
+#### Tercera forma
+
+
+
+```{r generacion}
+genera_llegada_y_atencion_de_clientes <-
+  function(T_apertura, tasa_llegada, media_servicio) {
+    tiempos_llegadas_y_servicios <-
+      numeric(length = 2 * 2 * tasa_llegada * T_apertura) # vector numérico 2 datos (el 1 dos es porq guardo dos datos de cada cliente)
+    tiempo_total <- 0
+    i <- 0
+    repeat {
+      tiempo_entre_llegadas <- rexp(1, rate = tasa_llegada)
+      tiempo_total <- tiempo_total + tiempo_entre_llegadas # sumatorio sum ti > 300
+      if (tiempo_total >= T_apertura) {
+        break
+      }
+      tiempo_servicio <- rexp(1 , rate = 1 / media_servicio) # el 1 es la tasa de llegada
+      i <- i + 1
+      tiempos_llegadas_y_servicios[i] <- tiempo_entre_llegadas
+      i <- i + 1
+      tiempos_llegadas_y_servicios[i] <- tiempo_servicio
+    }
+    tiempos_llegadas_y_servicios[1:i] # lo que devuelve la función 
+    # desde 1 hasta i, porque si uno llega tarde, adios, no sigo almacenando
+  }
+
+cuenta_cuantos_clientes_esperan_mucho <- function(tiempos) {
+  if (length(tiempos) <= 2) {
+    0
+  } else {
+    numero_clientes_esperan_mucho <- 0
+    tiempo_de_espera <- 0
+    for (i in seq(3, length(tiempos), by = 2)) {
+      tiempo_de_espera <- max(
+        tiempo_de_espera + tiempos[i - 1] - tiempos[i],
+        0
+      )
+      if (tiempo_de_espera > 5) {
+        numero_clientes_esperan_mucho <-
+          numero_clientes_esperan_mucho + 1
+      }
+    }
+    numero_clientes_esperan_mucho
+  }
+}
+```
+
+A continuación, replicamos una cantidad de veces parametrizada por la variable `n` el proceso de generar un camino muestral del proceso estocástico y calcular cuántos clientes esperarán más de cinco minutos a ser atendidos.
+
+```{r replicacion}
+n <- 5e3
+
+# La expresión do.call(f, l) aplica la función f pasándole como argumentos
+# los elementos de la lista l.
+
+
+system.time(
+valores_clientes_esperan_mucho <- replicate(n, {
+  tiempos_llegadas_y_servicios <-
+    do.call(genera_llegada_y_atencion_de_clientes, params)
+  cuenta_cuantos_clientes_esperan_mucho(tiempos_llegadas_y_servicios)
+})
+)
+```
+
+Finalmente, calculamos una estimación y un intervalo de confianza para la promedio diario de clientes que esperarán más de 5 minutos a ser atendidos.
+
+```{r estimacion}
+estimacion_clientes_esperan_mucho <- mean(valores_clientes_esperan_mucho)
+
+probabilidad_cobertura <- 0.95
+alfa <- 1 - probabilidad_cobertura
+percentil <- qnorm(1 - alfa / 2)
+error_clientes_esperan_mucho <-
+  sqrt(var(valores_clientes_esperan_mucho) / n)
+
+intervalo_clientes_esperan_mucho <-
+  estimacion_clientes_esperan_mucho +
+  c(-1, 1) * error_clientes_esperan_mucho * percentil
+```
+
+En una sucursal bancaria con un solo oficinista, que permanece abierta durante \( `r params$T_apertura` \) minutos, con una tasa de llegada de clientes de \( `r params$tasa_llegada` \) por minuto y con un tiempo medio de servicio de \( `r params$media_servicio` \) minutos, el valor estimado de clientes que esperarán más de cinco minutos a ser atendidos es de \( `r round(estimacion_clientes_esperan_mucho)` \), siendo \( (`r round(intervalo_clientes_esperan_mucho)`) \) un intervalo de confianza con probabilidad de cobertura \( `r probabilidad_cobertura` \).
