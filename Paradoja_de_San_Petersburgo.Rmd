@@ -92,6 +92,9 @@ ggplot(
   )
 ```
 
+Aquí la esperanza es infinita.
+
+
 Los «saltos» que aparecen en el gráfico se producen cada vez que \( 2^{x_{n} + 1} \) es suficientemente grande y deben aparecer de forma continuada, ya que la ley fuerte de los grandes números sigue asegurando que \( \mathbb{P}(\hat{\mu}_{n} \rightarrow \infty) = 1 \). Sin embargo, puesto que todos los valores aleatorios \( x_{i} \) son finitos, \( \hat{\mu}_{n} \) es siempre finito. Por tanto, no es posible esperar a que \( \hat{\mu}_{n} = \infty \) y entonces declarar que \( \mu = \infty \).
 
 Si modificamos el problema de tal forma que al jugador se le entreguen \( x \)€ cuando la primera cara se obtiene en la \( x \)-ésima tirada, entonces
@@ -123,4 +126,9 @@ ggplot(
   )
 ```
 
-No obstante, es importante entender que gráficos como los anteriores únicamente proporcionan intuiciones acerca de si el valor de la esperanza es finito o infinito. Solo un razonamiento matemático formal puede proporcionar una respuesta conclusiva.
+
+Aquí la esperanza es finita.
+
+
+
+No obstante, esimportante entender que gráficos como los anteriores únicamente proporcionan intuiciones acerca de si el valor de la esperanza es finito o infinito. Solo un razonamiento matemático formal puede proporcionar una respuesta conclusiva.
