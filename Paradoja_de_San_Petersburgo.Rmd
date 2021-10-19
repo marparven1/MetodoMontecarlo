@@ -1,0 +1,126 @@
+---
+title: "La paradoja de San Petersburgo"
+output: 
+  prettydoc::html_pretty:
+    theme: leonids
+    highlight: github
+    toc: true
+---
+
+```{r replicabilidad, include=FALSE}
+set.seed(938475)
+```
+
+La paradoja de San Petersburgo es un ejemplo de problema en el que falla el método de Montecarlo (la paradoja es llamada así debido a que el matemático Daniel Bernoulli publicó en 1738 el primer análisis y propuesta de solución del problema en las Actas de la Academia de Ciencias de San Petersburgo).
+
+Consideremos el siguiente juego de azar:
+
+1. Se le pide al jugador que apueste una cierta cantidad de dinero \( C \).
+2. Se lanza una y otra vez una moneda no trucada hasta que sale cara.
+3. El jugador recibe \( 2^{x} \)€, donde \( x \) es la tirada en la que ha salido cara por primera vez.
+
+¿Hasta qué cantidad de dinero debería el jugador estar dispuesto a apostar para jugar a este juego? Teniendo en cuenta que la ganancia del jugador es \( G = 2^{x} - C \), para tratar de responder a esta pregunta usaremos el método de Montecarlo para estimar \( \mu = \mathbb{E}[2^{X + 1}] \), donde \( X \) representa el número de cruces antes de la primera cara y, por tanto, \( X \sim \mathrm{Geom}\bigl(\frac{1}{2}\bigr) \).
+
+```{r estimacion-ganancia}
+estimacion_Montecarlo <- function() {
+  n <- 1e5
+  valores <- replicate(n, {
+    x <- rgeom(1, prob = 1 / 2) + 1
+    2^x
+  })
+  estimacion <- mean(valores)
+  probabilidad_cobertura <- 0.95
+  alfa <- 1 - probabilidad_cobertura
+  percentil <- qnorm(1 - alfa / 2)
+  error_estandar <- sqrt(var(valores) / n)
+  intervalo_confianza <- estimacion + c(-1, 1) * error_estandar * percentil
+  list(
+    Estimacion = estimacion,
+    Intervalo = intervalo_confianza,
+    Longitud = diff(intervalo_confianza)
+  )
+}
+```
+
+Desafortunadamente, podemos comprobar que cada vez que apliquemos el método obtenemos una estimación totalmente distinta.
+
+```{r aplicaciones-metodo-Montecarlo}
+estimacion_Montecarlo()
+estimacion_Montecarlo()
+estimacion_Montecarlo()
+```
+
+Los resultados obtenidos son consecuencia de que el problema tiene esperanza (y, por tanto, varianza) infinita.
+\begin{equation*}
+  \mu
+  = \mathbb{E}[2^{X + 1}]
+  = \sum_{x = 0}^{\infty} 2^{x + 1} \mathbb{P}(X = x)
+  = \sum_{x = 0}^{\infty} 2^{x + 1} 2^{-(x + 1)}
+  = \infty
+\end{equation*}
+
+La paradoja es entonces que, a pesar de que la ganancia esperada del jugador es mayor que la cantidad exigida para entrar en el juego, y por lo tanto se debería aceptar sea cual sea esa cantidad, una persona racional no estaría dispuesta a jugar si la apuesta inicial es excesiva.
+
+En efecto, asumiendo que \( C \) es una potencia de \( 2 \), se tiene que:
+\begin{equation*}
+  \mathbb{P}(G > 0)
+  = \mathbb{P}(X \geq \log_{2} C)
+  = \sum_{x = \log_{2} C}^{\infty} \mathbb{P}(X = x)
+  = \sum_{x = \log_{2} C}^{\infty} 2^{-(x + 1)}
+  = \frac{1}{C}
+\end{equation*}
+por lo que la probabilidad de obtener una ganancia positiva disminuye a medida que aumenta la apuesta inicial, a pesar de que la ganancia esperada es infinita.
+
+Un síntoma de que la esperanza a estimar es infinita se observa en el siguiente gráfico, que muestra la evolución de \( \hat{\mu}_{n} \) con respecto a \( n \).
+
+```{r grafico-evolucion-estimacion-1, echo=FALSE}
+library(ggplot2)
+
+n <- 1e5
+valores <- replicate(n, {
+  x <- rgeom(1, prob = 1 / 2) + 1
+  2^x
+})
+ggplot(
+  data.frame(x = 1:n, y = cumsum(valores) / (1:n)),
+  aes(x = x, y = y)
+) +
+  geom_line() +
+  labs(
+    x = expression(italic(n)),
+    y = expression(hat(mu)[italic(n)])
+  )
+```
+
+Los «saltos» que aparecen en el gráfico se producen cada vez que \( 2^{x_{n} + 1} \) es suficientemente grande y deben aparecer de forma continuada, ya que la ley fuerte de los grandes números sigue asegurando que \( \mathbb{P}(\hat{\mu}_{n} \rightarrow \infty) = 1 \). Sin embargo, puesto que todos los valores aleatorios \( x_{i} \) son finitos, \( \hat{\mu}_{n} \) es siempre finito. Por tanto, no es posible esperar a que \( \hat{\mu}_{n} = \infty \) y entonces declarar que \( \mu = \infty \).
+
+Si modificamos el problema de tal forma que al jugador se le entreguen \( x \)€ cuando la primera cara se obtiene en la \( x \)-ésima tirada, entonces
+\begin{equation*}
+  \mu
+  = \mathbb{E}[X + 1]
+  = \sum_{x = 0}^{\infty} (x + 1) \mathbb{P}(X = x)
+  = \sum_{x = 0}^{\infty} (x + 1) 2^{-(x + 1)}
+  = 2
+\end{equation*}
+y se tiene el siguiente gráfico de la evolución de \( \hat{\mu}_{n} \) con respecto a \( n \), en el que no aparecen esos «saltos».
+
+```{r grafico-evolucion-estimacion-2, echo=FALSE}
+library(ggplot2)
+
+n <- 1e5
+valores <- replicate(n, {
+  x <- rgeom(1, prob = 1 / 2) + 1
+  x
+})
+ggplot(
+  data.frame(x = 1:n, y = cumsum(valores) / (1:n)),
+  aes(x = x, y = y)
+) +
+  geom_line() +
+  labs(
+    x = expression(italic(n)),
+    y = expression(hat(mu)[italic(n)])
+  )
+```
+
+No obstante, es importante entender que gráficos como los anteriores únicamente proporcionan intuiciones acerca de si el valor de la esperanza es finito o infinito. Solo un razonamiento matemático formal puede proporcionar una respuesta conclusiva.

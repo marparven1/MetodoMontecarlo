@@ -1,0 +1,207 @@
+---
+title: "PERT"
+output: html_document
+---
+
+```{r reproducibilidad, include=FALSE}
+set.seed(443701)
+```
+
+```{r configuracion, include=FALSE}
+precision_resultados <- 2
+```
+
+La _Técnica de Revisión y Evaluación de Proyectos_ (Project Evaluation and Review Technique, PERT) es una técnica para analizar y representar las tareas involucradas en la realización de un proyecto. PERT se centra especialmente en analizar el tiempo requerido para completar cada tarea, identificando el tiempo mínimo necesario para completar el proyecto.
+
+Consideremos como ejemplo el proyecto de software descrito en la siguiente tabla, donde para cada tarea se indican las tareas de las que depende.
+
+```{r tabla PERT, echo=FALSE}
+knitr::kable(
+  data.frame(
+    Tarea = paste(
+      1:10,
+      c(
+        "Planificación",
+        "Diseño de la base de datos",
+        "Disposición de los módulos",
+        "Captura de la base de datos",
+        "Interfaz de la base de datos",
+        "Módulo de entrada",
+        "Módulo de salida",
+        "Estructura de la interfaz gráfica",
+        "Implementación de la interfaz E/S",
+        "Pruebas finales"
+      )
+    ),
+    Dependencias = c(
+      "Ninguna",
+      "1",
+      "1",
+      "2",
+      "2",
+      "3",
+      "3",
+      "3",
+      "5, 6, 7",
+      "4, 8, 9"
+    )
+  )
+)
+```
+
+Podemos representar entonces el proyecto mediante el siguiente diagrama en el que los nodos representan las tareas y los ejes las dependencias entre ellas:
+
+```{r PERT-diagrama, echo=FALSE, message=FALSE}
+library(ggdag)
+
+dag <- dagitty::dagitty('dag {
+  1 [latent, pos="0, 0"]
+  2 [latent, pos=".5, .5"]
+  3 [latent, pos=".5, -.5"]
+  4 [latent, pos="1, 1"]
+  5 [latent, pos="1, .5"]
+  6 [latent, pos="1, 0"]
+  7 [latent, pos="1, -.5"]
+  8 [latent, pos="1, -1"]
+  9 [latent, pos="1.5, 0"]
+  10 [latent, pos="2, 0"]
+1 -> 2
+  1 -> 3
+  2 -> 4
+  2 -> 5
+  3 -> 6
+  3 -> 7
+  3 -> 8
+  4 -> 10
+  5 -> 9
+  6 -> 9
+  7 -> 9
+  8 -> 10
+  9 -> 10
+  }')
+
+dag %>%
+  tidy_dagitty() %>%
+  ggdag() +
+  labs(x = "", y = "") +
+  scale_x_continuous(breaks = NULL, limits = c(-.25, 2.25)) +
+  scale_y_continuous(breaks = NULL, limits = c(-1.25, 1.25))
+```
+
+El proyecto comienza en el instante \( 0 \). La tarea \( j \)-ésima comienza en el instante \( s_{j} \), dura \( t_{j} \) instantes de tiempo y termina en el instante \( e_{j} = s_{j} + t_{j} \). Cualquier tarea \( j \) sin dependencias comienza en \( s_{j} = 0 \). El instante de comienzo de una tarea con dependencias es el máximo de los instantes en los que terminan estas últimas. Por ejemplo, \( s_{4} = e_{2} \) y \( s_{9} = \max(e_{5}, e_{6}, e_{7}) \). El proyecto al completo termina en el instante \( e_{10} \).
+
+Supongamos que el tiempo medio estimado en completar cada tarea viene dado por los siguientes valores:
+
+```{r parametros}
+duraciones_medias_tareas_proyecto <- c(4, 4, 2, 5, 2, 3, 2, 3, 2, 2)
+```
+
+Si todas las tareas duraran exactamente el tiempo especificado, entonces se podría calcular fácilmente que \( e_{10} = 15 \). Sin embargo, consideramos que realmente se tiene \( t_{j} \sim \mathrm{Exp}(\lambda_{j}) \), siendo \( \lambda_{j} \) la duración media indicada. Nuestro problema es, entonces, estimar \( \mathbb{E}[e_{10}] \) bajo esas condiciones.
+
+Para realizar esa estimación mediante el método de Montecarlo, definimos en primer lugar una función que genera la duración aleatoria de cada una de las tareas y una función que calcula el valor de \( e_{10} \), dado el vector de esas duraciones aleatorias.
+
+```{r generacion-1}
+genera_duraciones_tareas <- function(duraciones_medias) {
+  duraciones_tareas <- numeric(10) # número de tareas
+  for (j in seq_len(10)) {
+    lambda <- 1 / duraciones_medias[j]
+    duraciones_tareas[j] <- rexp(1, rate = 1 / lambda)
+  }
+  duraciones_tareas
+}
+
+calcula_duracion_proyecto <- function(t) { # totalmente específico de este proyecto, para otro grafo tengo que usar otra función
+  e_1 <- t[1]
+  e_2 <- e_1 + t[2]
+  e_3 <- e_1 + t[3]
+  e_4 <- e_2 + t[4]
+  e_5 <- e_2 + t[5]
+  e_6 <- e_3 + t[6]
+  e_7 <- e_3 + t[7]
+  e_8 <- e_3 + t[8]
+  e_9 <- max(e_5, e_6, e_7) + t[9]
+  max(e_4, e_8, e_9) + t[10]
+}
+```
+
+A continuación, replicamos una cantidad de veces parametrizada por la variable `n` el proceso de generar duraciones aleatorias de las tareas, según la distribución exponencial que corresponda, y calcular la duración total del proyecto.
+
+```{r replicacion-1}
+n <- 1e5
+
+duraciones_proyecto <- replicate(n, {
+  duraciones_tareas <-
+    genera_duraciones_tareas(duraciones_medias_tareas_proyecto)
+  calcula_duracion_proyecto(duraciones_tareas)
+})
+```
+
+Finalmente, calculamos una estimación y un intervalo de confianza para la duración esperada del proyecto.
+
+```{r estimacion-1}
+estimacion_duracion_proyecto <- mean(duraciones_proyecto)
+
+probabilidad_cobertura <- 0.95
+alfa <- 1 - probabilidad_cobertura
+percentil <- qnorm(1 - alfa / 2)
+error_estandar <- sqrt(var(duraciones_proyecto) / n)
+intervalo_confianza <-
+  estimacion_duracion_proyecto + c(-1, 1) * error_estandar * percentil
+```
+
+Hemos obtenido entonces una estimación de \( `r round(estimacion_duracion_proyecto, digits = precision_resultados)` \) para la duración media del proyecto, siendo \( (`r round(intervalo_confianza, digits = precision_resultados)`) \) un intervalo de confianza con probabilidad de cobertura \( `r probabilidad_cobertura` \).
+
+Si representamos gráficamente una estimación de densidad de las duraciones aleatorias obtenidas para el proyecto, podemos comprobar que resulta una distribución centrada en el promedio estimado, pero con una larga cola a la derecha.
+
+```{r estimacion-densidad, echo=FALSE}
+library(ggplot2)
+
+ggplot(
+  data.frame(x = duraciones_proyecto),
+  aes(x = x)
+) +
+  geom_density() +
+  xlab("Duración total del proyecto") +
+  ylab("Densidad estimada")
+```
+
+Esto quiere decir que es poco probable, pero posible, que el proyecto dure bastante tiempo.
+
+Supongamos que si el proyecto tiene una duración mayor de \( 40 \) se nos impone una penalización monetaria. Nos interesaría entonces estimar \( \mathbb{P}(e_{10} > 40) \) para determinar si deberíamos aceptar o no realizar el proyecto. Para ello, podemos aplicar también el método de Montecarlo.
+
+En primer lugar, definimos una función que, dado el vector de duraciones de las tareas, determina si el proyecto tiene o no una duración mayor de \( 40 \).
+
+```{r generacion-2}
+indica_proyecto_largo <- function(t) {
+  calcula_duracion_proyecto(t) > 40
+}
+```
+
+A continuación, replicamos una cantidad de veces parametrizada por la variable `n` el proceso de generar duraciones aleatorias de las tareas, según la distribución exponencial que corresponda, y determinar si el proyecto tiene una duración mayor de \( 40 \).
+
+```{r replicacion-2}
+n <- 1e5
+
+indicador_proyectos_largos <- replicate(n, {
+  duraciones_tareas <-
+    genera_duraciones_tareas(duraciones_medias_tareas_proyecto)
+  indica_proyecto_largo(duraciones_tareas)
+})
+```
+
+Finalmente, realizamos una estimación de la probabilidad de que un proyecto tenga una duración mayor de \( 40 \) y calculamos un intervalo de confianza por el método de Agresti-Coull.
+
+```{r estimacion-2}
+probabilidad_cobertura <- 0.95
+alfa <- 1 - probabilidad_cobertura
+percentil <- qnorm(1 - alfa / 2)
+n_0 <- n_1 <- percentil^2 / 2
+n_Agresti_Coull <- n + n_0 + n_1 # TODOS LOS PROYECTOS
+# sum(indicador_proyectos_largos) CUANTOS VERDADEROS HABÍA. CUANTOS REALES
+# MAYORES DE 40
+estimacion <- (sum(indicador_proyectos_largos) + n_1) / n_Agresti_Coull
+error_estandar <- sqrt(estimacion * (1 - estimacion) / n_Agresti_Coull)
+intervalo_confianza <- estimacion + c(-1, 1) * error_estandar * percentil
+```
+
+Se obtiene entonces una estimación de \( `r estimacion` \) para \( \mathbb{P}(e_{10} > 40) \), siendo \( (`r intervalo_confianza`) \) un intervalo de confianza con probabilidad de cobertura \( `r probabilidad_cobertura` \), obtenido por el método de Agresti-Coull.
