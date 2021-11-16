@@ -4,51 +4,66 @@ subtitle: "Técnicas de Computación para la Estadística"
 author: "Marta Venegas Pardo"
 output: 
   prettydoc::html_pretty:
-    theme: leonids
+    theme: cayman
     highlight: github
     toc: true
     toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
+library(ggplot2)
 knitr::opts_chunk$set(echo = TRUE)
 set.seed(457367)
 ```
 
-Para crear éste documento RMarkdown reproducible, hemos hecho uso de una semilla.
 
 
-Para cada uno de los problemas que se proponen, calcular la estimación requerida mediante el método de Montecarlo. Construir el mejor (de menor longitud) intervalo de confianza con probabilidad de cobertura 99.7% que se pueda. 
+Para crear éste documento RMarkdown reproducible, hemos hecho uso de una
+semilla.
 
-Para tratar de mejorar los intervalos construidos pueden aplicarse las siguientes técnicas:
+Para cada uno de los problemas que se proponen, calcular la estimación
+requerida mediante el método de Montecarlo. Construir el mejor (de menor
+longitud) intervalo de confianza con probabilidad de cobertura 99.7% que
+se pueda.
 
-- Generar una mayor cantidad de valores aleatorios (considerar un $n$ mayor).
+Para tratar de mejorar los intervalos construidos pueden aplicarse las
+siguientes técnicas:
 
-- Aplicar técnicas de reducción de varianza: variables antitéticas, muestreo estratificado, muestreo por importancia.
+-   Generar una mayor cantidad de valores aleatorios (considerar un $n$
+    mayor).
 
-Documentar en RMarkdown (de manera reproducible y con parámetros, en su caso) todo el proceso de construcción y mejora del intervalo de confianza.
+-   Aplicar técnicas de reducción de varianza: variables antitéticas,
+    muestreo estratificado, muestreo por importancia.
 
-Puede ser de utilidad considerar esta página de Wikipedia, en la que puede encontrarse un listado de distintas distribuciones de probabilidad, y este paquete de R, que permite manejar distribuciones de probabilidad adicionales a las estándar.
+Documentar en RMarkdown (de manera reproducible y con parámetros, en su
+caso) todo el proceso de construcción y mejora del intervalo de
+confianza.
+
+Puede ser de utilidad considerar esta página de Wikipedia, en la que
+puede encontrarse un listado de distintas distribuciones de
+probabilidad, y este paquete de R, que permite manejar distribuciones de
+probabilidad adicionales a las estándar.
 
 Los problemas propuestos son los siguientes:
 
-
 # Ejercicio 1
 
-Estimarr el valor de: 
-\[I =
+Estimarr el valor de: $$I =
   \int_{0}^{1} x^2 \sqrt{1-x^2}  \,dx = \dfrac{\pi}{16} \simeq 0,1963495408493621
-\]
+$$
 
-Para estimar esta integral mediante el Método de Montecarlo, hay que poner la integral como una esperanza de x.
+Para estimar esta integral mediante el Método de Montecarlo, hay que
+poner la integral como una esperanza de x.
 
-Es decir: \(I=E[g(X)] \), donde X es una variable uniforme en el intervalo (0,1) y g(x) = \(x^2 \sqrt{1-x^2}\).
+Es decir: $I=E[g(X)]$, donde X es una variable uniforme en el intervalo
+(0,1) y g(x) = $x^2 \sqrt{1-x^2}$.
 
 ## Pasos
 
 ### Definición de funciones
 
-En este caso de manera uniforme en el intervalo (0,1), y definimos la función g que deberá aplicarse a esos valores aleatorios.
+En este caso de manera uniforme en el intervalo (0,1), y definimos la
+función g que deberá aplicarse a esos valores aleatorios.
 
 ```{r}
 genera_valor_aleatorio <- function() {
@@ -62,7 +77,7 @@ g <- function(x) {
 }
 ```
 
-### Generamos valores aleatorios 
+### Generamos valores aleatorios
 
 Generamos valores aleatorios y le aplicamos la función g.
 
@@ -85,15 +100,14 @@ sample(valores_g,size = 15)
 estimacion <- mean(valores_g)
 ```
 
+El valor estimado de $I$ es $`r estimacion`$. Este método siempre dará
+una aproximación, mejor o peor pero se trata de una aproximación.
 
-
-El valor estimado de \( I \) es \(`r estimacion`\).
-Este método siempre dará una aproximación, mejor o peor pero se trata de una aproximación.
-
-Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un
+intervalo de confianza que permita acotar la variabilidad de la
+estimación.
 
 ### Intervalo de confianza
-
 
 ```{r}
 probabilidad_cobertura <- 0.997
@@ -103,18 +117,14 @@ error_estandar <- sqrt(var(valores_g)/n)
 intervalo_confianza <- estimacion + c(-1,1) * error_estandar * percentil
 ```
 
-
-Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es  ( \(`r intervalo_confianza`\) )
-
+Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es
+( $`r intervalo_confianza`$ )
 
 # Ejercicio 2
 
-
-Estimarr el valor de: 
-\[I =
+Estimarr el valor de: $$I =
   \int_{0}^{1} -30 \cos(\pi x) x^4 (1-x^4)  \,dx  \simeq 1,714716594386961
-\]
-
+$$
 
 ## Definición de la función g
 
@@ -125,9 +135,7 @@ g<- function(x){
 }
 ```
 
-
 ## Generación de valores aleatorios
-
 
 ```{r}
 n <- 1e6
@@ -138,25 +146,20 @@ valores_g <- replicate(n , {
 )
 ```
 
-
-
-
 ## Estimación de I
 
 ```{r}
 estimacion <- mean(valores_g)
 ```
 
+El valor estimado de $I$ es $`r estimacion`$. Este método siempre dará
+una aproximación, mejor o peor pero se trata de una aproximación.
 
-
-El valor estimado de \( I \) es \(`r estimacion`\).
-Este método siempre dará una aproximación, mejor o peor pero se trata de una aproximación.
-
-Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
-
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un
+intervalo de confianza que permita acotar la variabilidad de la
+estimación.
 
 ## Intervalo de confianza
-
 
 ```{r}
 probabilidad_cobertura <- 0.997
@@ -166,24 +169,16 @@ error_estandar <- sqrt(var(valores_g)/n)
 intervalo_confianza <- estimacion + c(-1,1) * error_estandar * percentil
 ```
 
-
-Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es  ( \(`r intervalo_confianza`\) )
-
-
-
-
+Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es
+( $`r intervalo_confianza`$ )
 
 # Ejercicio 3
 
-
-
-Estimarr el valor de: 
-\[I =
+Estimarr el valor de: $$I =
   \int_{0}^{1} 
   \dfrac{e^{- \frac{x^2}{2}}}{\sqrt{x(1-x)}}
   \,dx  \simeq 2,646630906854468
-\]
-
+$$
 
 ## Definición de la función g
 
@@ -194,9 +189,7 @@ g<- function(x){
 }
 ```
 
-
 ## Generación de valores aleatorios
-
 
 ```{r}
 n <- 1e6
@@ -207,25 +200,20 @@ valores_g <- replicate(n , {
 )
 ```
 
-
-
-
 ## Estimación de I
 
 ```{r}
 estimacion <- mean(valores_g)
 ```
 
+El valor estimado de $I$ es $`r estimacion`$. Este método siempre dará
+una aproximación, mejor o peor pero se trata de una aproximación.
 
-
-El valor estimado de \( I \) es \(`r estimacion`\).
-Este método siempre dará una aproximación, mejor o peor pero se trata de una aproximación.
-
-Puesto que esto es un resultado aleatorio, hay que calcular siempre un intervalo de confianza que permita acotar la variabilidad de la estimación.
-
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un
+intervalo de confianza que permita acotar la variabilidad de la
+estimación.
 
 ## Intervalo de confianza
-
 
 ```{r}
 probabilidad_cobertura <- 0.997
@@ -235,9 +223,249 @@ error_estandar <- sqrt(var(valores_g)/n)
 intervalo_confianza <- estimacion + c(-1,1) * error_estandar * percentil
 ```
 
+Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es
+( $`r intervalo_confianza`$ )
 
-Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es  ( \(`r intervalo_confianza`\) )
+# Ejercicio 4
+
+Estimar el valor de: $$I =
+  \int_{0}^{\infty} 
+  \dfrac{e^{- \frac{x^2}{2}}}{\sqrt{x}}
+  \,dx \simeq  2.1558005
+$$
+
+Para poder estimar la integral a partir de la generación de valores
+uniformes en $(0, 1)$ realizamos el siguiente cambio de variable: $$
+  x = \dfrac{1}{1-U} - 1
+$$
+
+Así, obtenemos la siguiente integral:
+
+$$I =
+  \int_{0}^{\infty} 
+  \dfrac{e^{- \frac{x^2}{2}}}{\sqrt{x}}
+  \,dx  = 
+   \int_{0}^{1} 
+  \dfrac{e^{- \frac{\big(\frac{1}{1-u}-1\big)^2}{2}}}{\sqrt{\frac{1}{1-u}-1}} \cdot \frac{1}{(1-u)^2}
+  \, du = 
+   \int_{0}^{1} 
+  \dfrac{e^{- \frac{\big(\frac{1}{1-u}-1\big)^2}{2}}}{\sqrt{\frac{u}{1-u}}\cdot(1-u)^2}  
+  \, du 
+$$
+
+## Definición de la función g
+
+```{r}
+g<- function(x){
+  ( exp(-(((1/(1-x))-1)^2)/2))/(sqrt(x/(1-x))*(1-x)^2)
+}
+```
+
+## Generación de valores aleatorios
+
+```{r}
+n <- 1e6
+valores_g <- replicate(n , {
+  x <- genera_valor_aleatorio()
+  g(x)
+}
+)
+```
+
+## Estimación de I
+
+```{r}
+estimacion <- mean(valores_g)
+```
+
+El valor estimado de $I$ es $`r estimacion`$. Este método siempre dará
+una aproximación, mejor o peor pero se trata de una aproximación.
+
+Puesto que esto es un resultado aleatorio, hay que calcular siempre un
+intervalo de confianza que permita acotar la variabilidad de la
+estimación.
+
+## Intervalo de confianza
+
+```{r}
+probabilidad_cobertura <- 0.997
+alfa <- 1 - probabilidad_cobertura
+percentil<- qnorm(1 - alfa / 2)
+error_estandar <- sqrt(var(valores_g)/n)
+intervalo_confianza <- estimacion + c(-1,1) * error_estandar * percentil
+```
+
+Luego, un intervalo de confianza con probabilidad de cobertura 0.997 es
+( $`r intervalo_confianza`$ )
+
+# Ejercicio 11
+
+```{r configuracion, include=FALSE}
+precision_resultados <- 5
+```
+
+Consideremos el grafo no dirigido. Se tiene que las longitudes
+$X_i \sim U(0,a_i),$ con $a_1=1,a_2=2,a_3=3,a_4=1,a_5=2$, son
+independientes. Si denotamos $X=(X_1,\dots , X_5)$, entonces el valor
+$l=E[g(X)]$, con
+\[g(X)= min (X_1 + X_4 , X_1+X_3 + X_5 , X_2 + X_3 + X_4 , X_2 + X_5 )\]
+
+es el valor esperado de la longitud del camino más corto entre los nodos
+A y D.
+
+Se pide: *Estimar el valor de l*
+
+```{r  echo=FALSE}
+knitr::kable(
+  data.frame(
+    Tarea = paste(
+      1:4,
+      c(
+        "A",
+        "B",
+        "C",
+        "D"
+      )
+    ),
+    Dependencias = c(
+      "Ninguna",
+      "Ninguna",
+      "Ninguna",
+      "Ninguna"
+    )
+  )
+)
+```
+
+## Gráfo no dirigido
+
+Podemos representar entonces el proyecto mediante el siguiente diagrama
+en el que los nodos representan las tareas y los ejes las longitudes
+entre ellas:
+
+![](images/Captura%20de%20pantalla%202021-11-16%20a%20las%2014.14.55.png)
 
 
 
+```{r PERT-diagrama, echo=FALSE, message=FALSE}
+library(ggdag)
+library(dagitty)
+dag <- dagitty::dagitty('dag {
+  A [latent, pos="0, 0"]
+  B [latent, pos="1, 1"]
+  C [latent, pos="1, -1"]
+  D [latent, pos="2, 0"]
+  A -> B
+  B -> C
+  A -> C
+  B -> D
+  C -> D
+  A <- B
+  B <- C
+  A <- C
+  B <- D
+  C <- D
+  }')
 
+dag %>%
+  tidy_dagitty() %>%
+  ggdag() +
+  labs(x = "", y = "") +
+  scale_x_continuous(breaks = NULL, limits = c(-.25, 2.25)) +
+  scale_y_continuous(breaks = NULL, limits = c(-1.25, 1.25))
+```
+
+-   A-B: X_1
+-   A-C: X_2
+-   B-C: X_3
+-   B-D: X_4
+-   C-D: X_5
+
+Las longitudes medias son las siguientes:
+
+
+```{r}
+a<-c(1,2,3,1,2)
+longitudes_medias<- a
+```
+
+
+## Objetivo
+
+Consideramos que realmente se tienelas longitudes $X_i \sim U(0,a_i),$
+con $a_1=1,a_2=2,a_3=3,a_4=1,a_5=2$, son independientes.
+
+**Nuestro problema es, entonces, estimar** $l=E[g(X)]$ bajo esas
+condiciones,con
+$$ g(X)= min (X_1 + X_4 , X_1+X_3 + X_5 , X_2 + X_3 + X_4 , X_2 + X_5 )$$
+
+Queremos estimar el valor de la longitud del camino mas corto entre los
+nodos A y D
+
+## Estimación con Método de montecarlo
+
+### Generación
+
+Para realizar esa estimación mediante el método de Montecarlo, definimos en primer lugar una función que genera la longitud aleatoria de cada uno de los caminos entre los nodos A y D y una función que calcula el valor de $g(x)$.
+
+```{r generacion-1}
+genera_vector_aleatorio <- function(l) {
+  x_1 <- runif(1,min=0,max=l[1])
+  x_2 <- runif(1,min=0,max=l[2])
+  x_3 <- runif(1,min=0,max=l[3])
+  x_4 <- runif(1,min=0,max=l[4])
+  x_5 <- runif(1,min=0,max=l[5])
+  return (c(x_1,x_2,x_3,x_4,x_5))
+  }
+  
+g<- function(x) { 
+  x_1<- x[1]
+  x_2<- x[2]
+  x_3<- x[3]
+  x_4<- x[4]
+  x_5<- x[5]
+  min(x_1+x_4,x_1+x_3+x_5,x_2+x_3+x_4,x_2+x_5)
+}
+```
+
+### Replicación
+
+A continuación, replicamos una cantidad de veces parametrizada por la
+variable `n` el proceso de generar duraciones aleatorias de las tareas,
+según la distribución exponencial que corresponda, y calcular la
+duración total del proyecto.
+
+```{r replicacion-1}
+n <- 1e5
+
+valores_g <- replicate(n, {
+  x<-genera_vector_aleatorio(longitudes_medias)
+  g(x)
+})
+```
+
+### Estimación
+
+Finalmente, calculamos una estimación y un intervalo de confianza para
+la longitud mínima esperada entre los nodos A y D.
+
+```{r estimacion-1}
+estimacion_longitud <- mean(valores_g) # estimación
+
+# IC
+probabilidad_cobertura <- 0.997
+alfa <- 1 - probabilidad_cobertura
+percentil <- qnorm(1 - alfa / 2)
+error_estandar <- sqrt(var(longitudes_medias) / n)
+intervalo_confianza <-
+  estimacion_longitud + c(-1, 1) * error_estandar * percentil
+```
+
+### Solución
+
+Hemos obtenido entonces una estimación de
+$`r round(estimacion_longitud , digits = precision_resultados)`$
+la longitud media del camino más corto entre los nodos A y D, siendo
+$(`r round(intervalo_confianza, digits = precision_resultados)`)$ un
+intervalo de confianza con probabilidad de cobertura
+$`r probabilidad_cobertura`$.
